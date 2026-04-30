@@ -4,6 +4,7 @@ import { resolveSession, SESSION_COOKIE } from "@/lib/auth";
 import { arePicksEqual, getSubmissionForUserSlate, upsertCanonicalSubmission } from "@/lib/submissions";
 import { getSlateById } from "@/lib/slates";
 import { checkRateLimit } from "@/lib/rate-limit";
+import { getResolvedSubmissionForUser } from "@/lib/results";
 
 type RequestBody = {
   slateId?: string;
@@ -33,6 +34,7 @@ export async function GET(request: Request) {
   }
 
   const submission = await getSubmissionForUserSlate({ userId: user.id, slateId });
+  const resolved = await getResolvedSubmissionForUser({ userId: user.id, slateId });
   return NextResponse.json({
     submission: submission
       ? {
@@ -41,6 +43,7 @@ export async function GET(request: Request) {
           updatedAt: submission.updatedAt,
         }
       : null,
+    resolved,
   });
 }
 

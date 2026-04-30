@@ -125,7 +125,7 @@
       "id": "slate_30f6fc0ec23a0291",
       "label": "Week 30 Mock",
       "lockAt": "2026-05-01T21:39:08.556Z",
-      "status": "open",
+      "status": "resolved",
       "matchups": [
         {
           "id": "m1",
@@ -200,6 +200,107 @@
       ],
       "createdAt": "2026-04-30T21:39:08.622Z",
       "publishedAt": "2026-04-30T21:39:08.622Z"
+    }
+  ],
+  "resolvedSubmissions": [
+    {
+      "userId": "usr_1887ec87ec027c3cd7cf6f64c5063d90",
+      "slateId": "slate_30f6fc0ec23a0291",
+      "correct": 5,
+      "total": 10,
+      "matchups": [
+        {
+          "matchupId": "m1",
+          "winner": "void",
+          "actualA": null,
+          "actualB": null,
+          "policy": "postponed",
+          "userPick": "A",
+          "isCorrect": null
+        },
+        {
+          "matchupId": "m2",
+          "winner": "A",
+          "actualA": 17.2,
+          "actualB": 14.7,
+          "policy": "normal",
+          "userPick": "A",
+          "isCorrect": true
+        },
+        {
+          "matchupId": "m3",
+          "winner": "A",
+          "actualA": 16.1,
+          "actualB": 13.7,
+          "policy": "normal",
+          "userPick": "A",
+          "isCorrect": true
+        },
+        {
+          "matchupId": "m4",
+          "winner": "A",
+          "actualA": 13.8,
+          "actualB": 11.4,
+          "policy": "normal",
+          "userPick": "A",
+          "isCorrect": true
+        },
+        {
+          "matchupId": "m5",
+          "winner": "A",
+          "actualA": 19.7,
+          "actualB": 17.3,
+          "policy": "normal",
+          "userPick": "B",
+          "isCorrect": false
+        },
+        {
+          "matchupId": "m6",
+          "winner": "A",
+          "actualA": 15.2,
+          "actualB": 12.7,
+          "policy": "normal",
+          "userPick": "B",
+          "isCorrect": false
+        },
+        {
+          "matchupId": "m7",
+          "winner": "A",
+          "actualA": 15.6,
+          "actualB": 13.2,
+          "policy": "normal",
+          "userPick": "B",
+          "isCorrect": false
+        },
+        {
+          "matchupId": "m8",
+          "winner": "A",
+          "actualA": 15,
+          "actualB": 12.6,
+          "policy": "normal",
+          "userPick": "A",
+          "isCorrect": true
+        },
+        {
+          "matchupId": "m9",
+          "winner": "A",
+          "actualA": 14.3,
+          "actualB": 11.9,
+          "policy": "normal",
+          "userPick": "A",
+          "isCorrect": true
+        },
+        {
+          "matchupId": "m10",
+          "winner": "A",
+          "actualA": 19.4,
+          "actualB": 17,
+          "policy": "normal",
+          "userPick": "B",
+          "isCorrect": false
+        }
+      ],
+      "resolvedAt": "2026-04-30T21:48:33.317Z"
     }
   ]
 }

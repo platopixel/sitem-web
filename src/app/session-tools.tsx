@@ -19,6 +19,23 @@ type ActiveSlate = {
   matchups: Matchup[];
 };
 
+type ResolvedSubmission = {
+  userId: string;
+  slateId: string;
+  correct: number;
+  total: number;
+  resolvedAt: string;
+  matchups: Array<{
+    matchupId: string;
+    winner: "A" | "B" | "void";
+    actualA: number | null;
+    actualB: number | null;
+    policy: "normal" | "postponed";
+    userPick: "A" | "B" | null;
+    isCorrect: boolean | null;
+  }>;
+};
+
 export function SessionTools() {
   const [activeSlate, setActiveSlate] = useState<ActiveSlate | null>(null);
   const [picks, setPicks] = useState<Record<string, "A" | "B">>({});
@@ -27,6 +44,7 @@ export function SessionTools() {
   const [isLoadingSlate, setIsLoadingSlate] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [readOnly, setReadOnly] = useState(false);
+  const [resolved, setResolved] = useState<ResolvedSubmission | null>(null);
   const router = useRouter();
 
   const picksCompletedCount = useMemo(() => {
@@ -81,6 +99,7 @@ export function SessionTools() {
       submission?: {
         picks: Record<string, "A" | "B">;
       } | null;
+      resolved?: ResolvedSubmission | null;
     };
     if (!response.ok) {
       setSubmitStatus(data.error ?? "Unable to restore your saved picks.");
@@ -90,6 +109,7 @@ export function SessionTools() {
       setPicks(data.submission.picks);
       setSubmitStatus("Restored your previously submitted picks.");
     }
+    setResolved(data.resolved ?? null);
   }
 
   async function loadActiveSlate() {
@@ -113,6 +133,7 @@ export function SessionTools() {
     if (!data.slate) {
       setActiveSlate(null);
       setReadOnly(false);
+      setResolved(null);
       setSlateStatus(data.emptyState ?? "No active slate.");
       return;
     }
@@ -120,11 +141,64 @@ export function SessionTools() {
     setActiveSlate(data.slate);
     setReadOnly(Boolean(data.readOnly));
     setPicks({});
+    setResolved(null);
     setSubmitStatus(null);
     setSlateStatus(
       data.readOnly ? "Latest slate loaded in read-only mode (lock has passed)." : "Active slate loaded.",
     );
     await loadSavedSubmission(data.slate.id);
+  }
+
+  async function resolveMockResults() {
+    if (!activeSlate) {
+      setSlateStatus("Load a slate before resolving results.");
+      return;
+    }
+    let forceLockNow = false;
+    if (activeSlate.status === "open") {
+      const shouldLockAndResolve = window.confirm(
+        "This slate is still open. Lock it now and resolve mock results immediately?",
+      );
+      if (!shouldLockAndResolve) {
+        setSlateStatus("Resolve canceled.");
+        return;
+      }
+      forceLockNow = true;
+    }
+    const answerKey = activeSlate.matchups.map((matchup, index) => {
+      if (index === 0) {
+        return {
+          matchupId: matchup.id,
+          policy: "postponed" as const,
+        };
+      }
+      return {
+        matchupId: matchup.id,
+        policy: "normal" as const,
+        actualA: Number((matchup.projectedA + 1.5).toFixed(1)),
+        actualB: Number((matchup.projectedB - 0.7).toFixed(1)),
+      };
+    });
+
+    const response = await fetch("/api/admin/slates/resolve", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-admin-secret": "dev-admin",
+      },
+      body: JSON.stringify({
+        slateId: activeSlate.id,
+        forceLockNow,
+        answerKey,
+      }),
+    });
+    const data = (await response.json()) as { error?: string };
+    if (!response.ok) {
+      setSlateStatus(data.error ?? "Unable to resolve mock results.");
+      return;
+    }
+    setSlateStatus("Slate resolved from mock answer key.");
+    await loadActiveSlate();
   }
 
   async function publishMockSlate() {
@@ -176,6 +250,13 @@ export function SessionTools() {
           onClick={publishMockSlate}
         >
           Publish mock slate (admin)
+        </button>
+        <button
+          type="button"
+          className="rounded-md border border-black/20 px-4 py-2 text-sm"
+          onClick={resolveMockResults}
+        >
+          Resolve mock results (admin)
         </button>
       </div>
       {slateStatus ? <p className="mt-3 text-sm">{slateStatus}</p> : null}
@@ -253,6 +334,43 @@ export function SessionTools() {
         </button>
       </div>
       {submitStatus ? <p className="mt-3 text-sm">{submitStatus}</p> : null}
+      {resolved ? (
+        <section className="mt-4 rounded-md border border-black/10 p-3 text-sm dark:border-white/20">
+          <p className="font-medium">
+            Results: {resolved.correct}/{resolved.total} correct
+          </p>
+          <p className="text-zinc-600 dark:text-zinc-400">
+            Resolved at {new Date(resolved.resolvedAt).toLocaleString()}
+          </p>
+          <ol className="mt-2 grid gap-2 md:grid-cols-2">
+            {resolved.matchups.map((item, index) => (
+              <li key={item.matchupId} className="rounded border border-black/10 p-2 dark:border-white/20">
+                <p className="font-medium">Matchup {index + 1}</p>
+                <p>
+                  Winner:{" "}
+                  {item.winner === "void"
+                    ? "Void (postponed)"
+                    : item.winner === "A"
+                      ? activeSlate?.matchups.find((m) => m.id === item.matchupId)?.playerA ?? "Player A"
+                      : activeSlate?.matchups.find((m) => m.id === item.matchupId)?.playerB ?? "Player B"}
+                </p>
+                <p>
+                  Your pick:{" "}
+                  {item.userPick === null
+                    ? "none"
+                    : item.userPick === "A"
+                      ? activeSlate?.matchups.find((m) => m.id === item.matchupId)?.playerA ?? "Player A"
+                      : activeSlate?.matchups.find((m) => m.id === item.matchupId)?.playerB ?? "Player B"}
+                </p>
+                <p>
+                  Outcome:{" "}
+                  {item.isCorrect === null ? "No score (void matchup)" : item.isCorrect ? "Correct" : "Incorrect"}
+                </p>
+              </li>
+            ))}
+          </ol>
+        </section>
+      ) : null}
     </section>
   );
 }

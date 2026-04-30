@@ -42,11 +42,36 @@ export type StoredSlate = {
   publishedAt?: string;
 };
 
+export type MatchupResolutionPolicy = "normal" | "postponed";
+
+export type StoredResolvedMatchup = {
+  matchupId: string;
+  winner: "A" | "B" | "void";
+  actualA: number | null;
+  actualB: number | null;
+  policy: MatchupResolutionPolicy;
+};
+
+export type StoredResolvedSubmission = {
+  userId: string;
+  slateId: string;
+  correct: number;
+  total: number;
+  matchups: Array<
+    StoredResolvedMatchup & {
+      userPick: "A" | "B" | null;
+      isCorrect: boolean | null;
+    }
+  >;
+  resolvedAt: string;
+};
+
 type StoreShape = {
   users: StoredUser[];
   sessions: StoredSession[];
   submissions: StoredSubmission[];
   slates: StoredSlate[];
+  resolvedSubmissions: StoredResolvedSubmission[];
 };
 
 const STORE_DIR = path.join(process.cwd(), ".data");
@@ -57,6 +82,7 @@ const DEFAULT_STORE: StoreShape = {
   sessions: [],
   submissions: [],
   slates: [],
+  resolvedSubmissions: [],
 };
 
 let writeQueue: Promise<void> = Promise.resolve();
@@ -100,6 +126,7 @@ export async function readStore(): Promise<StoreShape> {
     sessions: parsed.sessions ?? [],
     submissions,
     slates: parsed.slates ?? [],
+    resolvedSubmissions: parsed.resolvedSubmissions ?? [],
   };
 }
 
