@@ -1,0 +1,19 @@
+{
+  "users": [
+    {
+      "id": "usr_1887ec87ec027c3cd7cf6f64c5063d90",
+      "email": "test@test.com",
+      "passwordHash": "335c5696f155ba4b8e3652186029ab92:db9993413d00a235d89c16c60e8704437057b3f560806d531493f7685b52e8a5e2ac53cb6642adc83c7ace579de690d56468a03a9bb7b87b1368cd686fd56a68",
+      "createdAt": "2026-04-30T21:29:34.617Z"
+    }
+  ],
+  "sessions": [
+    {
+      "id": "ses_c6b408601b52c1a7661a30cdb2522a9f",
+      "userId": "usr_1887ec87ec027c3cd7cf6f64c5063d90",
+      "createdAt": "2026-04-30T21:29:34.670Z",
+      "expiresAt": "2026-05-14T21:29:34.670Z"
+    }
+  ],
+  "submissions": []
+}
