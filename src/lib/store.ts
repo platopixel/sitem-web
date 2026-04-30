@@ -22,10 +22,31 @@ export type StoredSubmission = {
   updatedAt: string;
 };
 
+export type SlateStatus = "draft" | "open" | "locked" | "resolved";
+
+export type StoredMatchup = {
+  id: string;
+  playerA: string;
+  playerB: string;
+  projectedA: number;
+  projectedB: number;
+};
+
+export type StoredSlate = {
+  id: string;
+  label: string;
+  lockAt: string;
+  status: SlateStatus;
+  matchups: StoredMatchup[];
+  createdAt: string;
+  publishedAt?: string;
+};
+
 type StoreShape = {
   users: StoredUser[];
   sessions: StoredSession[];
   submissions: StoredSubmission[];
+  slates: StoredSlate[];
 };
 
 const STORE_DIR = path.join(process.cwd(), ".data");
@@ -35,6 +56,7 @@ const DEFAULT_STORE: StoreShape = {
   users: [],
   sessions: [],
   submissions: [],
+  slates: [],
 };
 
 let writeQueue: Promise<void> = Promise.resolve();
@@ -52,7 +74,13 @@ async function ensureStore() {
 export async function readStore(): Promise<StoreShape> {
   await ensureStore();
   const raw = await readFile(STORE_PATH, "utf8");
-  return JSON.parse(raw) as StoreShape;
+  const parsed = JSON.parse(raw) as Partial<StoreShape>;
+  return {
+    users: parsed.users ?? [],
+    sessions: parsed.sessions ?? [],
+    submissions: parsed.submissions ?? [],
+    slates: parsed.slates ?? [],
+  };
 }
 
 export async function updateStore(

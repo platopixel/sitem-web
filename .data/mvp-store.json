@@ -15,5 +15,96 @@
       "expiresAt": "2026-05-14T21:29:34.670Z"
     }
   ],
-  "submissions": []
+  "submissions": [
+    {
+      "userId": "usr_1887ec87ec027c3cd7cf6f64c5063d90",
+      "slateId": "slate_8caaf20aa8a73cc3",
+      "payload": {
+        "note": "first test"
+      },
+      "updatedAt": "2026-04-30T21:33:41.839Z"
+    }
+  ],
+  "slates": [
+    {
+      "id": "slate_8caaf20aa8a73cc3",
+      "label": "Week 30 Mock",
+      "lockAt": "2026-05-01T21:33:29.862Z",
+      "status": "open",
+      "matchups": [
+        {
+          "id": "m1",
+          "playerA": "Amon-Ra St. Brown",
+          "playerB": "CeeDee Lamb",
+          "projectedA": 19.4,
+          "projectedB": 19.1
+        },
+        {
+          "id": "m2",
+          "playerA": "Breece Hall",
+          "playerB": "Travis Etienne",
+          "projectedA": 15.7,
+          "projectedB": 15.4
+        },
+        {
+          "id": "m3",
+          "playerA": "Drake London",
+          "playerB": "Jaylen Waddle",
+          "projectedA": 14.6,
+          "projectedB": 14.4
+        },
+        {
+          "id": "m4",
+          "playerA": "Sam LaPorta",
+          "playerB": "George Kittle",
+          "projectedA": 12.3,
+          "projectedB": 12.1
+        },
+        {
+          "id": "m5",
+          "playerA": "Jordan Love",
+          "playerB": "Trevor Lawrence",
+          "projectedA": 18.2,
+          "projectedB": 18
+        },
+        {
+          "id": "m6",
+          "playerA": "Isiah Pacheco",
+          "playerB": "Rachaad White",
+          "projectedA": 13.7,
+          "projectedB": 13.4
+        },
+        {
+          "id": "m7",
+          "playerA": "Chris Olave",
+          "playerB": "DK Metcalf",
+          "projectedA": 14.1,
+          "projectedB": 13.9
+        },
+        {
+          "id": "m8",
+          "playerA": "DeVonta Smith",
+          "playerB": "Nico Collins",
+          "projectedA": 13.5,
+          "projectedB": 13.3
+        },
+        {
+          "id": "m9",
+          "playerA": "Tee Higgins",
+          "playerB": "Calvin Ridley",
+          "projectedA": 12.8,
+          "projectedB": 12.6
+        },
+        {
+          "id": "m10",
+          "playerA": "Kyler Murray",
+          "playerB": "Jared Goff",
+          "projectedA": 17.9,
+          "projectedB": 17.7
+        }
+      ],
+      "createdAt": "2026-04-30T21:33:30.050Z",
+      "publishedAt": "2026-04-30T21:33:30.050Z"
+    }
+  ]
 }
