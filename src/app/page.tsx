@@ -17,7 +17,7 @@ export default async function Home() {
               <p className="text-sm text-zinc-600 dark:text-zinc-400">Signed in as</p>
               <h1 className="text-2xl font-semibold">{user.email}</h1>
               <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-                Phase 1 status: session-backed authentication is active.
+                Phase 3 status: active slate picks flow is enabled for signed-in users.
               </p>
             </section>
             <SessionTools />

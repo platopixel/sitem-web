@@ -3,7 +3,7 @@ import { updateStore } from "./store";
 export async function upsertCanonicalSubmission(input: {
   userId: string;
   slateId: string;
-  payload: Record<string, string>;
+  picks: Record<string, "A" | "B">;
 }) {
   const now = new Date().toISOString();
 
@@ -20,7 +20,7 @@ export async function upsertCanonicalSubmission(input: {
           {
             userId: input.userId,
             slateId: input.slateId,
-            payload: input.payload,
+            picks: input.picks,
             updatedAt: now,
           },
         ],
@@ -30,7 +30,7 @@ export async function upsertCanonicalSubmission(input: {
     const nextSubmissions = [...current.submissions];
     nextSubmissions[existingIndex] = {
       ...nextSubmissions[existingIndex],
-      payload: input.payload,
+      picks: input.picks,
       updatedAt: now,
     };
 
@@ -39,4 +39,13 @@ export async function upsertCanonicalSubmission(input: {
       submissions: nextSubmissions,
     };
   });
+}
+
+export async function getSubmissionForUserSlate(input: { userId: string; slateId: string }) {
+  const store = await updateStore((current) => current);
+  return (
+    store.submissions.find(
+      (entry) => entry.userId === input.userId && entry.slateId === input.slateId,
+    ) ?? null
+  );
 }

@@ -18,7 +18,7 @@ export type StoredSession = {
 export type StoredSubmission = {
   userId: string;
   slateId: string;
-  payload: Record<string, string>;
+  picks: Record<string, "A" | "B">;
   updatedAt: string;
 };
 
@@ -75,10 +75,30 @@ export async function readStore(): Promise<StoreShape> {
   await ensureStore();
   const raw = await readFile(STORE_PATH, "utf8");
   const parsed = JSON.parse(raw) as Partial<StoreShape>;
+  const submissions = (parsed.submissions ?? []).map((entry) => {
+    const picksSource =
+      "picks" in entry && typeof entry.picks === "object" && entry.picks
+        ? entry.picks
+        : "payload" in entry && typeof entry.payload === "object" && entry.payload
+          ? entry.payload
+          : {};
+    const picks: Record<string, "A" | "B"> = {};
+    for (const [matchupId, side] of Object.entries(picksSource)) {
+      if (side === "A" || side === "B") {
+        picks[matchupId] = side;
+      }
+    }
+    return {
+      userId: typeof entry.userId === "string" ? entry.userId : "",
+      slateId: typeof entry.slateId === "string" ? entry.slateId : "",
+      picks,
+      updatedAt: typeof entry.updatedAt === "string" ? entry.updatedAt : new Date(0).toISOString(),
+    };
+  });
   return {
     users: parsed.users ?? [],
     sessions: parsed.sessions ?? [],
-    submissions: parsed.submissions ?? [],
+    submissions,
     slates: parsed.slates ?? [],
   };
 }

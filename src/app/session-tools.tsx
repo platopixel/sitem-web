@@ -1,22 +1,38 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+
+type Matchup = {
+  id: string;
+  playerA: string;
+  playerB: string;
+  projectedA: number;
+  projectedB: number;
+};
+
+type ActiveSlate = {
+  id: string;
+  label: string;
+  lockAt: string;
+  matchups: Matchup[];
+};
 
 export function SessionTools() {
-  const [contextValue, setContextValue] = useState(() => {
-    if (typeof window === "undefined") return "";
-    return localStorage.getItem("non_sensitive_pick_note") ?? "";
-  });
-  const [activeSlate, setActiveSlate] = useState<{
-    id: string;
-    label: string;
-    lockAt: string;
-    matchups: { id: string; playerA: string; playerB: string; projectedA: number; projectedB: number }[];
-  } | null>(null);
+  const [activeSlate, setActiveSlate] = useState<ActiveSlate | null>(null);
+  const [picks, setPicks] = useState<Record<string, "A" | "B">>({});
   const [slateStatus, setSlateStatus] = useState<string | null>(null);
-  const [status, setStatus] = useState<string | null>(null);
+  const [submitStatus, setSubmitStatus] = useState<string | null>(null);
+  const [isLoadingSlate, setIsLoadingSlate] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
+
+  const picksCompletedCount = useMemo(() => {
+    if (!activeSlate) return 0;
+    return activeSlate.matchups.reduce((total, matchup) => {
+      return total + (picks[matchup.id] ? 1 : 0);
+    }, 0);
+  }, [activeSlate, picks]);
 
   async function signOut() {
     await fetch("/api/auth/signout", { method: "POST" });
@@ -24,39 +40,62 @@ export function SessionTools() {
     router.refresh();
   }
 
-  async function saveCanonicalSubmission() {
-    localStorage.setItem("non_sensitive_pick_note", contextValue);
-    const currentSlateId = activeSlate?.id ?? "week-1-mock";
+  async function submitPicks() {
+    if (!activeSlate) {
+      setSubmitStatus("Load an active slate before submitting.");
+      return;
+    }
+    if (picksCompletedCount !== activeSlate.matchups.length) {
+      setSubmitStatus("Pick a player in every matchup before submitting.");
+      return;
+    }
+    setIsSubmitting(true);
+    setSubmitStatus("Submitting picks...");
     const response = await fetch("/api/submissions", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        slateId: currentSlateId,
-        payload: {
-          note: contextValue || "empty-note",
-        },
+        slateId: activeSlate.id,
+        picks,
       }),
     });
     const data = (await response.json()) as { error?: string; message?: string };
+    setIsSubmitting(false);
     if (!response.ok) {
-      setStatus(data.error ?? "Unable to save submission.");
+      setSubmitStatus(data.error ?? "Unable to submit picks.");
       return;
     }
-    setStatus(data.message ?? "Saved.");
+    setSubmitStatus(data.message ?? "Picks submitted successfully.");
+  }
+
+  async function loadSavedSubmission(slateId: string) {
+    const response = await fetch(`/api/submissions?slateId=${encodeURIComponent(slateId)}`);
+    const data = (await response.json()) as {
+      error?: string;
+      submission?: {
+        picks: Record<string, "A" | "B">;
+      } | null;
+    };
+    if (!response.ok) {
+      setSubmitStatus(data.error ?? "Unable to restore your saved picks.");
+      return;
+    }
+    if (data.submission?.picks) {
+      setPicks(data.submission.picks);
+      setSubmitStatus("Restored your previously submitted picks.");
+    }
   }
 
   async function loadActiveSlate() {
+    setIsLoadingSlate(true);
+    setSlateStatus("Loading active slate...");
     const response = await fetch("/api/slates/active");
     const data = (await response.json()) as {
       error?: string;
       emptyState?: string;
-      slate?: {
-        id: string;
-        label: string;
-        lockAt: string;
-        matchups: { id: string; playerA: string; playerB: string; projectedA: number; projectedB: number }[];
-      } | null;
+      slate?: ActiveSlate | null;
     };
+    setIsLoadingSlate(false);
 
     if (!response.ok) {
       setSlateStatus(data.error ?? "Unable to load active slate.");
@@ -71,7 +110,10 @@ export function SessionTools() {
     }
 
     setActiveSlate(data.slate);
+    setPicks({});
+    setSubmitStatus(null);
     setSlateStatus("Active slate loaded.");
+    await loadSavedSubmission(data.slate.id);
   }
 
   async function publishMockSlate() {
@@ -94,19 +136,28 @@ export function SessionTools() {
     await loadActiveSlate();
   }
 
+  function pick(matchupId: string, side: "A" | "B") {
+    setPicks((current) => ({
+      ...current,
+      [matchupId]: side,
+    }));
+    setSubmitStatus(null);
+  }
+
   return (
-    <section className="w-full max-w-lg rounded-xl border border-black/10 bg-white p-6 shadow-sm dark:border-white/20 dark:bg-black">
-      <h2 className="text-xl font-semibold">Phase 1 session and persistence check</h2>
+    <section className="w-full rounded-xl border border-black/10 bg-white p-6 shadow-sm dark:border-white/20 dark:bg-black">
+      <h2 className="text-xl font-semibold">Close Call picks</h2>
       <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-        This stores a non-sensitive draft note locally, upserts one canonical submission per user/slate, and reads the active slate.
+        Make one pick per matchup, then submit before lock.
       </p>
       <div className="mt-4 flex flex-wrap gap-2">
         <button
           type="button"
-          className="rounded-md border border-black/20 px-4 py-2 text-sm"
+          className="rounded-md border border-black/20 px-4 py-2 text-sm disabled:opacity-60"
           onClick={loadActiveSlate}
+          disabled={isLoadingSlate}
         >
-          Load active slate
+          {isLoadingSlate ? "Loading slate..." : "Reload active slate"}
         </button>
         <button
           type="button"
@@ -124,7 +175,7 @@ export function SessionTools() {
           </p>
           <p>Lock deadline: {new Date(activeSlate.lockAt).toLocaleString()}</p>
           <p className="mt-1 text-zinc-600 dark:text-zinc-400">
-            Matchups: {activeSlate.matchups.length} published
+            Picks completed: {picksCompletedCount}/{activeSlate.matchups.length}
           </p>
         </div>
       ) : (
@@ -132,23 +183,47 @@ export function SessionTools() {
           No active slate is currently published.
         </div>
       )}
-      <label className="mt-4 block text-sm" htmlFor="context">
-        Non-sensitive draft note
-      </label>
-      <input
-        id="context"
-        className="mt-1 w-full rounded-md border border-black/20 p-2 text-sm"
-        value={contextValue}
-        onChange={(event) => setContextValue(event.target.value)}
-        placeholder="Example: leaning WR in matchup #2"
-      />
-      <div className="mt-4 flex gap-2">
+      {activeSlate ? (
+        <ol className="mt-4 grid gap-3 md:grid-cols-2">
+          {activeSlate.matchups.map((matchup, index) => (
+            <li key={matchup.id} className="rounded-md border border-black/10 p-3 dark:border-white/20">
+              <p className="text-sm font-medium">Matchup {index + 1}</p>
+              <div className="mt-2 grid gap-2">
+                <button
+                  type="button"
+                  className={`rounded-md border px-3 py-2 text-left text-sm ${
+                    picks[matchup.id] === "A"
+                      ? "border-black bg-black text-white dark:border-white dark:bg-white dark:text-black"
+                      : "border-black/20"
+                  }`}
+                  onClick={() => pick(matchup.id, "A")}
+                >
+                  {matchup.playerA} ({matchup.projectedA.toFixed(1)} proj)
+                </button>
+                <button
+                  type="button"
+                  className={`rounded-md border px-3 py-2 text-left text-sm ${
+                    picks[matchup.id] === "B"
+                      ? "border-black bg-black text-white dark:border-white dark:bg-white dark:text-black"
+                      : "border-black/20"
+                  }`}
+                  onClick={() => pick(matchup.id, "B")}
+                >
+                  {matchup.playerB} ({matchup.projectedB.toFixed(1)} proj)
+                </button>
+              </div>
+            </li>
+          ))}
+        </ol>
+      ) : null}
+      <div className="mt-4 flex flex-wrap gap-2">
         <button
           type="button"
-          className="rounded-md bg-black px-4 py-2 text-sm font-medium text-white dark:bg-white dark:text-black"
-          onClick={saveCanonicalSubmission}
+          className="rounded-md bg-black px-4 py-2 text-sm font-medium text-white disabled:opacity-60 dark:bg-white dark:text-black"
+          onClick={submitPicks}
+          disabled={!activeSlate || isSubmitting}
         >
-          Save canonical submission
+          {isSubmitting ? "Submitting..." : "Submit picks"}
         </button>
         <button
           type="button"
@@ -158,7 +233,7 @@ export function SessionTools() {
           Sign out
         </button>
       </div>
-      {status ? <p className="mt-3 text-sm">{status}</p> : null}
+      {submitStatus ? <p className="mt-3 text-sm">{submitStatus}</p> : null}
     </section>
   );
 }

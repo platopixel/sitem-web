@@ -1,5 +1,5 @@
 import { randomBytes } from "node:crypto";
-import { type StoredMatchup, type StoredSlate, updateStore } from "./store";
+import { readStore, type StoredMatchup, type StoredSlate, updateStore } from "./store";
 
 function makeId(prefix: string) {
   return `${prefix}_${randomBytes(8).toString("hex")}`;
@@ -72,4 +72,19 @@ export async function getActiveSlate() {
   return store.slates
     .filter((slate) => slate.status === "open")
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0] ?? null;
+}
+
+export async function getSlateById(slateId: string) {
+  await updateStore((current) => {
+    const now = Date.now();
+    const nextSlates = current.slates.map((slate) => {
+      if (slate.status === "open" && new Date(slate.lockAt).getTime() <= now) {
+        return { ...slate, status: "locked" as const };
+      }
+      return slate;
+    });
+    return { ...current, slates: nextSlates };
+  });
+  const store = await readStore();
+  return store.slates.find((slate) => slate.id === slateId) ?? null;
 }
