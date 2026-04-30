@@ -49,3 +49,18 @@ export async function getSubmissionForUserSlate(input: { userId: string; slateId
     ) ?? null
   );
 }
+
+export function arePicksEqual(
+  left: Record<string, "A" | "B">,
+  right: Record<string, "A" | "B">,
+) {
+  const leftKeys = Object.keys(left);
+  const rightKeys = Object.keys(right);
+  if (leftKeys.length !== rightKeys.length) return false;
+  for (const key of leftKeys) {
+    if (left[key] !== right[key]) {
+      return false;
+    }
+  }
+  return true;
+}

@@ -74,6 +74,26 @@ export async function getActiveSlate() {
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0] ?? null;
 }
 
+export async function getLatestPlayableSlate() {
+  const store = await updateStore((current) => {
+    const now = Date.now();
+    const nextSlates = current.slates.map((slate) => {
+      if (slate.status === "open" && new Date(slate.lockAt).getTime() <= now) {
+        return { ...slate, status: "locked" as const };
+      }
+      return slate;
+    });
+    return { ...current, slates: nextSlates };
+  });
+
+  const sorted = [...store.slates].sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+  );
+  const openSlate = sorted.find((slate) => slate.status === "open");
+  if (openSlate) return openSlate;
+  return sorted.find((slate) => slate.status === "locked" || slate.status === "resolved") ?? null;
+}
+
 export async function getSlateById(slateId: string) {
   await updateStore((current) => {
     const now = Date.now();

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { getActiveSlate } from "@/lib/slates";
+import { getLatestPlayableSlate } from "@/lib/slates";
 import { resolveSession, SESSION_COOKIE } from "@/lib/auth";
 
 export async function GET() {
@@ -11,7 +11,7 @@ export async function GET() {
     return NextResponse.json({ error: "Session expired. Please sign in again." }, { status: 401 });
   }
 
-  const slate = await getActiveSlate();
+  const slate = await getLatestPlayableSlate();
   if (!slate) {
     return NextResponse.json({
       slate: null,
@@ -19,5 +19,8 @@ export async function GET() {
     });
   }
 
-  return NextResponse.json({ slate });
+  return NextResponse.json({
+    slate,
+    readOnly: slate.status !== "open",
+  });
 }

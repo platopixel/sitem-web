@@ -15,6 +15,7 @@ type ActiveSlate = {
   id: string;
   label: string;
   lockAt: string;
+  status: "draft" | "open" | "locked" | "resolved";
   matchups: Matchup[];
 };
 
@@ -25,6 +26,7 @@ export function SessionTools() {
   const [submitStatus, setSubmitStatus] = useState<string | null>(null);
   const [isLoadingSlate, setIsLoadingSlate] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [readOnly, setReadOnly] = useState(false);
   const router = useRouter();
 
   const picksCompletedCount = useMemo(() => {
@@ -41,6 +43,10 @@ export function SessionTools() {
   }
 
   async function submitPicks() {
+    if (readOnly) {
+      setSubmitStatus("This slate is locked. Picks are now read-only.");
+      return;
+    }
     if (!activeSlate) {
       setSubmitStatus("Load an active slate before submitting.");
       return;
@@ -94,6 +100,7 @@ export function SessionTools() {
       error?: string;
       emptyState?: string;
       slate?: ActiveSlate | null;
+      readOnly?: boolean;
     };
     setIsLoadingSlate(false);
 
@@ -105,14 +112,18 @@ export function SessionTools() {
 
     if (!data.slate) {
       setActiveSlate(null);
+      setReadOnly(false);
       setSlateStatus(data.emptyState ?? "No active slate.");
       return;
     }
 
     setActiveSlate(data.slate);
+    setReadOnly(Boolean(data.readOnly));
     setPicks({});
     setSubmitStatus(null);
-    setSlateStatus("Active slate loaded.");
+    setSlateStatus(
+      data.readOnly ? "Latest slate loaded in read-only mode (lock has passed)." : "Active slate loaded.",
+    );
     await loadSavedSubmission(data.slate.id);
   }
 
@@ -174,9 +185,15 @@ export function SessionTools() {
             Active slate: <span className="font-medium">{activeSlate.label}</span>
           </p>
           <p>Lock deadline: {new Date(activeSlate.lockAt).toLocaleString()}</p>
+          <p>Status: {activeSlate.status}</p>
           <p className="mt-1 text-zinc-600 dark:text-zinc-400">
             Picks completed: {picksCompletedCount}/{activeSlate.matchups.length}
           </p>
+          {readOnly ? (
+            <p className="mt-1 text-zinc-600 dark:text-zinc-400">
+              Slate is locked. Picks are displayed in read-only mode.
+            </p>
+          ) : null}
         </div>
       ) : (
         <div className="mt-3 rounded-md border border-dashed border-black/20 p-3 text-sm dark:border-white/20">
@@ -197,6 +214,7 @@ export function SessionTools() {
                       : "border-black/20"
                   }`}
                   onClick={() => pick(matchup.id, "A")}
+                  disabled={readOnly}
                 >
                   {matchup.playerA} ({matchup.projectedA.toFixed(1)} proj)
                 </button>
@@ -208,6 +226,7 @@ export function SessionTools() {
                       : "border-black/20"
                   }`}
                   onClick={() => pick(matchup.id, "B")}
+                  disabled={readOnly}
                 >
                   {matchup.playerB} ({matchup.projectedB.toFixed(1)} proj)
                 </button>
@@ -221,7 +240,7 @@ export function SessionTools() {
           type="button"
           className="rounded-md bg-black px-4 py-2 text-sm font-medium text-white disabled:opacity-60 dark:bg-white dark:text-black"
           onClick={submitPicks}
-          disabled={!activeSlate || isSubmitting}
+          disabled={!activeSlate || isSubmitting || readOnly}
         >
           {isSubmitting ? "Submitting..." : "Submit picks"}
         </button>

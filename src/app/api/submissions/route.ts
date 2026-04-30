@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { resolveSession, SESSION_COOKIE } from "@/lib/auth";
-import { getSubmissionForUserSlate, upsertCanonicalSubmission } from "@/lib/submissions";
+import { arePicksEqual, getSubmissionForUserSlate, upsertCanonicalSubmission } from "@/lib/submissions";
 import { getSlateById } from "@/lib/slates";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 type RequestBody = {
   slateId?: string;
@@ -84,10 +85,37 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Please make a pick for all matchups before submitting." }, { status: 400 });
   }
 
+  const headerStore = await headers();
+  const forwardedFor = headerStore.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown-ip";
+  const limit = checkRateLimit({
+    key: `${user.id}:${forwardedFor}:submit-picks`,
+    maxHits: 10,
+    windowMs: 60_000,
+  });
+  if (!limit.allowed) {
+    return NextResponse.json(
+      { error: "Too many submit attempts. Please wait and try again." },
+      {
+        status: 429,
+        headers: { "Retry-After": String(limit.retryAfterSeconds) },
+      },
+    );
+  }
+
+  const nextPicks = body.picks as Record<string, "A" | "B">;
+  const existing = await getSubmissionForUserSlate({ userId: user.id, slateId });
+  if (existing && arePicksEqual(existing.picks, nextPicks)) {
+    return NextResponse.json({
+      ok: true,
+      idempotent: true,
+      message: "Picks already submitted. No changes were needed.",
+    });
+  }
+
   await upsertCanonicalSubmission({
     userId: user.id,
     slateId,
-    picks: body.picks as Record<string, "A" | "B">,
+    picks: nextPicks,
   });
 
   return NextResponse.json({
