@@ -96,7 +96,7 @@ Each phase is a thin vertical slice with clear dependencies and demoable outcome
 
 ## Phase 9: Inactive-player behavior policy decision
 
-- **Type**: HITL
+- **Type**: HITL (decision recorded in `docs/policy-inactive-players-mvp.md`)
 - **Depends on**: Phase 2 (policy should be finalized before or during Phase 5)
 - **User stories covered**: 22
 - **Goal**: Finalize and enforce product policy for player inactivity before lock.

@@ -3,12 +3,16 @@
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 
+type PreLockParticipation = "active" | "inactive";
+
 type Matchup = {
   id: string;
   playerA: string;
   playerB: string;
   projectedA: number;
   projectedB: number;
+  preLockParticipationA?: PreLockParticipation;
+  preLockParticipationB?: PreLockParticipation;
 };
 
 type ActiveSlate = {
@@ -28,6 +32,13 @@ type ScoringTransparency = {
   mockDataDisclaimer: string;
 };
 
+type InactiveParticipantPolicy = {
+  policyId: string;
+  shortLabel: string;
+  summary: string;
+  bullets: readonly string[];
+};
+
 type ResolvedSubmission = {
   userId: string;
   slateId: string;
@@ -40,10 +51,19 @@ type ResolvedSubmission = {
     actualA: number | null;
     actualB: number | null;
     policy: "normal" | "postponed";
+    playedA?: boolean;
+    playedB?: boolean;
     userPick: "A" | "B" | null;
     isCorrect: boolean | null;
   }>;
 };
+
+/** Screen + SR: distinguishes stored 0 totals from Phase 9 did-not-play rows. */
+function formatResolvedActual(value: number | null, played: boolean | undefined) {
+  if (value === null) return "—";
+  if (played === false) return `${value.toFixed(1)} (did not play)`;
+  return value.toFixed(1);
+}
 
 export function SessionTools() {
   const [activeSlate, setActiveSlate] = useState<ActiveSlate | null>(null);
@@ -59,7 +79,14 @@ export function SessionTools() {
   const [auditStatus, setAuditStatus] = useState<string | null>(null);
   const [auditLoading, setAuditLoading] = useState(false);
   const [scoringTransparency, setScoringTransparency] = useState<ScoringTransparency | null>(null);
+  const [inactiveParticipantPolicy, setInactiveParticipantPolicy] =
+    useState<InactiveParticipantPolicy | null>(null);
   const router = useRouter();
+
+  const picksFormDescribedBy = [
+    "picks-instructions",
+    ...(inactiveParticipantPolicy ? (["inactive-participant-policy"] as const) : []),
+  ].join(" ");
 
   const projectionSuffix =
     scoringTransparency?.projectionValueSuffix ?? "proj";
@@ -113,6 +140,7 @@ export function SessionTools() {
     const response = await fetch(`/api/submissions?slateId=${encodeURIComponent(slateId)}`);
     const data = (await response.json()) as {
       error?: string;
+      inactiveParticipantPolicy?: InactiveParticipantPolicy;
       submission?: {
         picks: Record<string, "A" | "B">;
       } | null;
@@ -125,6 +153,9 @@ export function SessionTools() {
     if (data.submission?.picks) {
       setPicks(data.submission.picks);
       setSubmitStatus("Restored your previously submitted picks.");
+    }
+    if (data.inactiveParticipantPolicy) {
+      setInactiveParticipantPolicy(data.inactiveParticipantPolicy);
     }
     setResolved(data.resolved ?? null);
   }
@@ -139,6 +170,7 @@ export function SessionTools() {
       slate?: ActiveSlate | null;
       readOnly?: boolean;
       scoringTransparency?: ScoringTransparency | null;
+      inactiveParticipantPolicy?: InactiveParticipantPolicy | null;
     };
     setIsLoadingSlate(false);
 
@@ -146,8 +178,11 @@ export function SessionTools() {
       setSlateStatus(data.error ?? "Unable to load active slate.");
       setActiveSlate(null);
       setScoringTransparency(null);
+      setInactiveParticipantPolicy(null);
       return;
     }
+
+    setInactiveParticipantPolicy(data.inactiveParticipantPolicy ?? null);
 
     if (!data.slate) {
       setActiveSlate(null);
@@ -191,6 +226,14 @@ export function SessionTools() {
         return {
           matchupId: matchup.id,
           policy: "postponed" as const,
+        };
+      }
+      if (index === 1) {
+        return {
+          matchupId: matchup.id,
+          policy: "normal" as const,
+          playedB: false,
+          actualA: Number((matchup.projectedA + 1.5).toFixed(1)),
         };
       }
       return {
@@ -301,6 +344,26 @@ export function SessionTools() {
         Make one pick per matchup, then submit before lock. Use Tab to move between matchups, arrow keys
         to change selection within a matchup, and submit when every matchup has a pick.
       </p>
+      {inactiveParticipantPolicy ?
+        <aside
+          id="inactive-participant-policy"
+          aria-label={inactiveParticipantPolicy.shortLabel}
+          className="mt-4 rounded-lg border border-sky-200/90 bg-sky-50 p-4 text-sm text-zinc-800 dark:border-sky-900/60 dark:bg-sky-950/35 dark:text-sky-50"
+        >
+          <p className="font-semibold text-zinc-900 dark:text-sky-100">
+            Expected inactive players: {inactiveParticipantPolicy.shortLabel}{" "}
+            <span className="sr-only">&nbsp;(Policy ID {inactiveParticipantPolicy.policyId})</span>
+          </p>
+          <p className="mt-2 leading-relaxed text-zinc-800 dark:text-sky-100/95">
+            {inactiveParticipantPolicy.summary}
+          </p>
+          <ul className="mt-3 list-disc space-y-1 pl-5 text-xs leading-relaxed text-zinc-700 dark:text-sky-100/85">
+            {inactiveParticipantPolicy.bullets.map((line) => (
+              <li key={line}>{line}</li>
+            ))}
+          </ul>
+        </aside>
+      : null}
       {activeSlate && scoringTransparency ?
         <aside
           aria-label="Fantasy scoring rules"
@@ -378,7 +441,7 @@ export function SessionTools() {
         <form
           className="mt-4 space-y-3"
           aria-labelledby="picks-heading"
-          aria-describedby="picks-instructions"
+          aria-describedby={picksFormDescribedBy}
           onSubmit={(event) => {
             event.preventDefault();
             void submitPicks();
@@ -419,6 +482,11 @@ export function SessionTools() {
                       <span className="tabular-nums">
                         {matchup.playerA} ({matchup.projectedA.toFixed(1)} {projectionSuffix})
                       </span>
+                      {matchup.preLockParticipationA === "inactive" ?
+                        <span className="mt-1 block text-xs font-medium text-amber-900 dark:text-amber-200">
+                          Expected inactive before lock — your pick still counts if you choose them.
+                        </span>
+                      : null}
                     </label>
                     <label
                       htmlFor={`pick-${matchup.id}-b`}
@@ -440,6 +508,11 @@ export function SessionTools() {
                       <span className="tabular-nums">
                         {matchup.playerB} ({matchup.projectedB.toFixed(1)} {projectionSuffix})
                       </span>
+                      {matchup.preLockParticipationB === "inactive" ?
+                        <span className="mt-1 block text-xs font-medium text-amber-900 dark:text-amber-200">
+                          Expected inactive before lock — your pick still counts if you choose them.
+                        </span>
+                      : null}
                     </label>
                   </div>
                 </fieldset>
@@ -497,6 +570,12 @@ export function SessionTools() {
             {resolved.matchups.map((item, index) => (
               <li key={item.matchupId} className="rounded border border-black/10 p-2 dark:border-white/20">
                 <p className="font-medium">Matchup {index + 1}</p>
+                {item.policy === "postponed" ? null : (
+                  <p className="text-zinc-600 dark:text-zinc-400">
+                    Actual fantasy totals: A {formatResolvedActual(item.actualA, item.playedA)} · B{" "}
+                    {formatResolvedActual(item.actualB, item.playedB)}
+                  </p>
+                )}
                 <p>
                   Winner:{" "}
                   {item.winner === "void"

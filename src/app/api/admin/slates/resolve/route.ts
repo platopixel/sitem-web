@@ -11,6 +11,8 @@ type ResolveBody = {
     actualA?: number;
     actualB?: number;
     policy?: "normal" | "postponed";
+    playedA?: boolean;
+    playedB?: boolean;
   }>;
 };
 

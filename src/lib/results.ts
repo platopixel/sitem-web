@@ -6,14 +6,17 @@ import {
 } from "./store";
 import { getSlateById } from "./slates";
 
-type AnswerEntry = {
+export type ResolveAnswerEntry = {
   matchupId: string;
   actualA?: number;
   actualB?: number;
   policy?: "normal" | "postponed";
+  /** Default true. False => side scored 0 fantasy points (did not play). Ignores that side's actual* if present. */
+  playedA?: boolean;
+  playedB?: boolean;
 };
 
-function resolveMatchup(adapter: FantasyScoringAdapter, entry: AnswerEntry): StoredResolvedMatchup {
+function resolveMatchup(adapter: FantasyScoringAdapter, entry: ResolveAnswerEntry): StoredResolvedMatchup {
   const policy = entry.policy ?? "normal";
   if (policy === "postponed") {
     return {
@@ -25,23 +28,35 @@ function resolveMatchup(adapter: FantasyScoringAdapter, entry: AnswerEntry): Sto
     };
   }
 
-  const actualA = entry.actualA;
-  const actualB = entry.actualB;
-  if (typeof actualA !== "number" || typeof actualB !== "number") {
-    throw new Error(`Matchup "${entry.matchupId}" requires numeric actualA/actualB.`);
+  const playedA = entry.playedA !== false;
+  const playedB = entry.playedB !== false;
+  const statedA = entry.actualA;
+  const statedB = entry.actualB;
+
+  if (playedA && typeof statedA !== "number") {
+    throw new Error(`Matchup "${entry.matchupId}" requires numeric actualA when Player A played.`);
   }
+  if (playedB && typeof statedB !== "number") {
+    throw new Error(`Matchup "${entry.matchupId}" requires numeric actualB when Player B played.`);
+  }
+
+  const effectiveA = playedA ? statedA! : 0;
+  const effectiveB = playedB ? statedB! : 0;
+
   return {
     matchupId: entry.matchupId,
-    winner: adapter.compareActualTotalsWinner(actualA, actualB),
-    actualA,
-    actualB,
+    winner: adapter.compareActualTotalsWinner(effectiveA, effectiveB),
+    actualA: effectiveA,
+    actualB: effectiveB,
     policy,
+    playedA,
+    playedB,
   };
 }
 
 export async function resolveSlateFromAnswerKey(input: {
   slateId: string;
-  answerKey: AnswerEntry[];
+  answerKey: ResolveAnswerEntry[];
   forceLockNow?: boolean;
 }) {
   const slate = await getSlateById(input.slateId);

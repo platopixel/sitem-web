@@ -20,13 +20,20 @@ function buildMockMatchups(): StoredMatchup[] {
     ["Kyler Murray", "Jared Goff", 17.9, 17.7],
   ];
 
-  return pairs.map(([playerA, playerB, projectedA, projectedB], index) => ({
-    id: `m${index + 1}`,
-    playerA,
-    playerB,
-    projectedA,
-    projectedB,
-  }));
+  return pairs.map(([playerA, playerB, projectedA, projectedB], index) => {
+    const base: StoredMatchup = {
+      id: `m${index + 1}`,
+      playerA,
+      playerB,
+      projectedA,
+      projectedB,
+    };
+    // Phase 9 demo: one expected pre-lock inactive (Player B) — policy still allows picking either side.
+    if (index === 1) {
+      return { ...base, preLockParticipationB: "inactive" as const };
+    }
+    return base;
+  });
 }
 
 export async function publishMockSlate(input: { label: string; lockAt: string }) {

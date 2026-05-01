@@ -32,7 +32,8 @@ const MVP_STANDARD_PPR: FantasyScoringAdapter = {
   rulesSummary:
     "Projections and final scores use standard PPR-style fantasy totals (including 1 point per reception, with typical rushing/receiving/yards and touchdown weights). MVP data is illustrative only—not live NFL or provider-fed stats.",
   projectionValueSuffix: "proj · mock PPR",
-  tieBreakerLine: "Identical finalized totals defer to Player A as the matchup winner.",
+  tieBreakerLine:
+    "Did-not-play sides resolve as 0 fantasy points. Identical finalized totals defer to Player A as the matchup winner.",
   mockDataDisclaimer: "Points are deterministic mock projections and outcomes for development and demos.",
   compareActualTotalsWinner(actualA, actualB) {
     if (actualA >= actualB) return "A";

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { resolveSession, SESSION_COOKIE } from "@/lib/auth";
 import { getLatestPlayableSlate } from "@/lib/slates";
+import { getInactivePlayerPolicyPayload } from "@/lib/inactive-player-policy";
 import { getScoringAdapterForSlate, serializeScoringTransparency } from "@/lib/scoring";
 
 export async function GET() {
@@ -17,6 +18,7 @@ export async function GET() {
     return NextResponse.json({
       slate: null,
       scoringTransparency: null,
+      inactiveParticipantPolicy: getInactivePlayerPolicyPayload(),
       emptyState: "No active slate is currently published.",
     });
   }
@@ -28,5 +30,6 @@ export async function GET() {
     readOnly: slate.status !== "open",
     scoringTransparency: serializeScoringTransparency(scoringAdapter),
     scoringRulesetId: slate.scoringRulesetId ?? scoringAdapter.id,
+    inactiveParticipantPolicy: getInactivePlayerPolicyPayload(),
   });
 }

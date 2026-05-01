@@ -4,6 +4,7 @@ import { resolveSession, SESSION_COOKIE } from "@/lib/auth";
 import { arePicksEqual, getSubmissionForUserSlate, upsertCanonicalSubmission } from "@/lib/submissions";
 import { getSlateById } from "@/lib/slates";
 import { checkRateLimit } from "@/lib/rate-limit";
+import { getInactivePlayerPolicyPayload } from "@/lib/inactive-player-policy";
 import { getResolvedSubmissionForUser } from "@/lib/results";
 
 type RequestBody = {
@@ -36,6 +37,7 @@ export async function GET(request: Request) {
   const submission = await getSubmissionForUserSlate({ userId: user.id, slateId });
   const resolved = await getResolvedSubmissionForUser({ userId: user.id, slateId });
   return NextResponse.json({
+    inactiveParticipantPolicy: getInactivePlayerPolicyPayload(),
     submission: submission
       ? {
           slateId: submission.slateId,
@@ -112,6 +114,7 @@ export async function POST(request: Request) {
       ok: true,
       idempotent: true,
       message: "Picks already submitted. No changes were needed.",
+      inactiveParticipantPolicy: getInactivePlayerPolicyPayload(),
     });
   }
 
@@ -124,5 +127,6 @@ export async function POST(request: Request) {
   return NextResponse.json({
     ok: true,
     message: "Picks submitted successfully.",
+    inactiveParticipantPolicy: getInactivePlayerPolicyPayload(),
   });
 }

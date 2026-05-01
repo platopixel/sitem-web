@@ -24,12 +24,18 @@ export type StoredSubmission = {
 
 export type SlateStatus = "draft" | "open" | "locked" | "resolved";
 
+/** Pre-lock mock designation for user disclosure; omitted = expected active. */
+export type PreLockParticipation = "active" | "inactive";
+
 export type StoredMatchup = {
   id: string;
   playerA: string;
   playerB: string;
   projectedA: number;
   projectedB: number;
+  /** Mock pipeline: expected inactive before lock — picks still allowed (lock-in-place). */
+  preLockParticipationA?: PreLockParticipation;
+  preLockParticipationB?: PreLockParticipation;
 };
 
 export type StoredSlate = {
@@ -52,6 +58,9 @@ export type StoredResolvedMatchup = {
   actualA: number | null;
   actualB: number | null;
   policy: MatchupResolutionPolicy;
+  /** False = did not play → 0 fantasy points credited. Omitted for legacy/postponed rows. */
+  playedA?: boolean;
+  playedB?: boolean;
 };
 
 export type StoredResolvedSubmission = {
