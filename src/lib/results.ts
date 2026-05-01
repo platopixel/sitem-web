@@ -1,3 +1,4 @@
+import { type FantasyScoringAdapter, getScoringAdapterForSlate } from "@/lib/scoring";
 import {
   type StoredResolvedMatchup,
   type StoredResolvedSubmission,
@@ -12,12 +13,7 @@ type AnswerEntry = {
   policy?: "normal" | "postponed";
 };
 
-function compareActuals(actualA: number, actualB: number): "A" | "B" {
-  if (actualA >= actualB) return "A";
-  return "B";
-}
-
-function resolveMatchup(entry: AnswerEntry): StoredResolvedMatchup {
+function resolveMatchup(adapter: FantasyScoringAdapter, entry: AnswerEntry): StoredResolvedMatchup {
   const policy = entry.policy ?? "normal";
   if (policy === "postponed") {
     return {
@@ -36,7 +32,7 @@ function resolveMatchup(entry: AnswerEntry): StoredResolvedMatchup {
   }
   return {
     matchupId: entry.matchupId,
-    winner: compareActuals(actualA, actualB),
+    winner: adapter.compareActualTotalsWinner(actualA, actualB),
     actualA,
     actualB,
     policy,
@@ -64,7 +60,8 @@ export async function resolveSlateFromAnswerKey(input: {
     }
   }
 
-  const resolvedMatchups = slate.matchups.map((m) => resolveMatchup(byId.get(m.id)!));
+  const scoringAdapter = getScoringAdapterForSlate(slate);
+  const resolvedMatchups = slate.matchups.map((m) => resolveMatchup(scoringAdapter, byId.get(m.id)!));
   const now = new Date().toISOString();
 
   const store = await updateStore((current) => {

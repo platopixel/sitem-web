@@ -37,6 +37,8 @@ export type StoredSlate = {
   label: string;
   lockAt: string;
   status: SlateStatus;
+  /** Which scoring adapter governs matchup resolution; persisted for slate-scoped auditing. */
+  scoringRulesetId?: string;
   matchups: StoredMatchup[];
   createdAt: string;
   publishedAt?: string;

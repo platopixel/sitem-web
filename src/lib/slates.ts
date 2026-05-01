@@ -1,4 +1,5 @@
 import { randomBytes } from "node:crypto";
+import { DEFAULT_SCORING_RULESET_ID } from "@/lib/scoring";
 import { readStore, type StoredMatchup, type StoredSlate, updateStore } from "./store";
 
 function makeId(prefix: string) {
@@ -35,6 +36,7 @@ export async function publishMockSlate(input: { label: string; lockAt: string })
     label: input.label,
     lockAt: input.lockAt,
     status: "open",
+    scoringRulesetId: DEFAULT_SCORING_RULESET_ID,
     matchups: buildMockMatchups(),
     createdAt: now,
     publishedAt: now,

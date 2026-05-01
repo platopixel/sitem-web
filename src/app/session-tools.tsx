@@ -19,6 +19,15 @@ type ActiveSlate = {
   matchups: Matchup[];
 };
 
+type ScoringTransparency = {
+  rulesetId: string;
+  displayName: string;
+  rulesSummary: string;
+  projectionValueSuffix: string;
+  tieBreakerLine: string;
+  mockDataDisclaimer: string;
+};
+
 type ResolvedSubmission = {
   userId: string;
   slateId: string;
@@ -49,7 +58,11 @@ export function SessionTools() {
   const [auditSlateId, setAuditSlateId] = useState("");
   const [auditStatus, setAuditStatus] = useState<string | null>(null);
   const [auditLoading, setAuditLoading] = useState(false);
+  const [scoringTransparency, setScoringTransparency] = useState<ScoringTransparency | null>(null);
   const router = useRouter();
+
+  const projectionSuffix =
+    scoringTransparency?.projectionValueSuffix ?? "proj";
 
   const picksCompletedCount = useMemo(() => {
     if (!activeSlate) return 0;
@@ -125,12 +138,14 @@ export function SessionTools() {
       emptyState?: string;
       slate?: ActiveSlate | null;
       readOnly?: boolean;
+      scoringTransparency?: ScoringTransparency | null;
     };
     setIsLoadingSlate(false);
 
     if (!response.ok) {
       setSlateStatus(data.error ?? "Unable to load active slate.");
       setActiveSlate(null);
+      setScoringTransparency(null);
       return;
     }
 
@@ -138,11 +153,13 @@ export function SessionTools() {
       setActiveSlate(null);
       setReadOnly(false);
       setResolved(null);
+      setScoringTransparency(data.scoringTransparency ?? null);
       setSlateStatus(data.emptyState ?? "No active slate.");
       return;
     }
 
     setActiveSlate(data.slate);
+    setScoringTransparency(data.scoringTransparency ?? null);
     setReadOnly(Boolean(data.readOnly));
     setPicks({});
     setResolved(null);
@@ -278,6 +295,21 @@ export function SessionTools() {
       <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
         Make one pick per matchup, then submit before lock.
       </p>
+      {activeSlate && scoringTransparency ?
+        <aside
+          aria-label="Fantasy scoring rules"
+          className="mt-4 rounded-lg border border-amber-200/90 bg-amber-50 p-4 text-sm text-zinc-800 dark:border-amber-900/70 dark:bg-amber-950/40 dark:text-amber-50"
+        >
+          <p className="font-semibold text-zinc-900 dark:text-amber-100">
+            Active ruleset: {scoringTransparency.displayName}
+          </p>
+          <p className="mt-2 leading-relaxed text-zinc-800 dark:text-zinc-200">{scoringTransparency.rulesSummary}</p>
+          <ul className="mt-3 space-y-1 text-xs leading-relaxed text-zinc-700 dark:text-zinc-300">
+            <li>Tie-breaking: {scoringTransparency.tieBreakerLine}</li>
+            <li>{scoringTransparency.mockDataDisclaimer}</li>
+          </ul>
+        </aside>
+      : null}
       <div className="mt-4 flex flex-wrap gap-2">
         <button
           type="button"
@@ -340,7 +372,7 @@ export function SessionTools() {
                   onClick={() => pick(matchup.id, "A")}
                   disabled={readOnly}
                 >
-                  {matchup.playerA} ({matchup.projectedA.toFixed(1)} proj)
+                  {matchup.playerA} ({matchup.projectedA.toFixed(1)} {projectionSuffix})
                 </button>
                 <button
                   type="button"
@@ -352,7 +384,7 @@ export function SessionTools() {
                   onClick={() => pick(matchup.id, "B")}
                   disabled={readOnly}
                 >
-                  {matchup.playerB} ({matchup.projectedB.toFixed(1)} proj)
+                  {matchup.playerB} ({matchup.projectedB.toFixed(1)} {projectionSuffix})
                 </button>
               </div>
             </li>

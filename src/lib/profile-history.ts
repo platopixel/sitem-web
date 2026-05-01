@@ -1,8 +1,11 @@
+import { getScoringAdapterForSlate } from "@/lib/scoring";
 import { readStore, type SlateStatus } from "./store";
 
 export type ProfileHistoryRow = {
   slateId: string;
   label: string;
+  scoringRulesetId: string;
+  scoringRulesetDisplayName: string;
   slateStatus: SlateStatus;
   lockAt: string;
   slatePublishedAt: string;
@@ -52,10 +55,13 @@ export async function getProfileHistorySnapshot(userId: string): Promise<Profile
       const resolved = store.resolvedSubmissions.find(
         (entry) => entry.userId === userId && entry.slateId === sub.slateId,
       );
+      const scoringAdapter = getScoringAdapterForSlate(slate);
 
       const row: ProfileHistoryRow = {
         slateId: slate.id,
         label: slate.label,
+        scoringRulesetId: scoringAdapter.id,
+        scoringRulesetDisplayName: scoringAdapter.displayName,
         slateStatus: slate.status,
         lockAt: slate.lockAt,
         slatePublishedAt: slate.publishedAt ?? slate.createdAt,

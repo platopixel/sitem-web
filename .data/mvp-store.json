@@ -38,6 +38,23 @@
         "m9": "A"
       },
       "updatedAt": "2026-04-30T21:39:31.483Z"
+    },
+    {
+      "userId": "usr_1887ec87ec027c3cd7cf6f64c5063d90",
+      "slateId": "slate_dad2db0d19cd24d9",
+      "picks": {
+        "m1": "B",
+        "m2": "B",
+        "m4": "B",
+        "m3": "A",
+        "m5": "B",
+        "m6": "A",
+        "m8": "A",
+        "m7": "A",
+        "m9": "B",
+        "m10": "A"
+      },
+      "updatedAt": "2026-05-01T05:45:14.927Z"
     }
   ],
   "slates": [
@@ -200,6 +217,87 @@
       ],
       "createdAt": "2026-04-30T21:39:08.622Z",
       "publishedAt": "2026-04-30T21:39:08.622Z"
+    },
+    {
+      "id": "slate_dad2db0d19cd24d9",
+      "label": "Week 1 Mock",
+      "lockAt": "2026-05-02T05:45:00.516Z",
+      "status": "resolved",
+      "scoringRulesetId": "mvp_mock_standard_ppr_v1",
+      "matchups": [
+        {
+          "id": "m1",
+          "playerA": "Amon-Ra St. Brown",
+          "playerB": "CeeDee Lamb",
+          "projectedA": 19.4,
+          "projectedB": 19.1
+        },
+        {
+          "id": "m2",
+          "playerA": "Breece Hall",
+          "playerB": "Travis Etienne",
+          "projectedA": 15.7,
+          "projectedB": 15.4
+        },
+        {
+          "id": "m3",
+          "playerA": "Drake London",
+          "playerB": "Jaylen Waddle",
+          "projectedA": 14.6,
+          "projectedB": 14.4
+        },
+        {
+          "id": "m4",
+          "playerA": "Sam LaPorta",
+          "playerB": "George Kittle",
+          "projectedA": 12.3,
+          "projectedB": 12.1
+        },
+        {
+          "id": "m5",
+          "playerA": "Jordan Love",
+          "playerB": "Trevor Lawrence",
+          "projectedA": 18.2,
+          "projectedB": 18
+        },
+        {
+          "id": "m6",
+          "playerA": "Isiah Pacheco",
+          "playerB": "Rachaad White",
+          "projectedA": 13.7,
+          "projectedB": 13.4
+        },
+        {
+          "id": "m7",
+          "playerA": "Chris Olave",
+          "playerB": "DK Metcalf",
+          "projectedA": 14.1,
+          "projectedB": 13.9
+        },
+        {
+          "id": "m8",
+          "playerA": "DeVonta Smith",
+          "playerB": "Nico Collins",
+          "projectedA": 13.5,
+          "projectedB": 13.3
+        },
+        {
+          "id": "m9",
+          "playerA": "Tee Higgins",
+          "playerB": "Calvin Ridley",
+          "projectedA": 12.8,
+          "projectedB": 12.6
+        },
+        {
+          "id": "m10",
+          "playerA": "Kyler Murray",
+          "playerB": "Jared Goff",
+          "projectedA": 17.9,
+          "projectedB": 17.7
+        }
+      ],
+      "createdAt": "2026-05-01T05:45:00.577Z",
+      "publishedAt": "2026-05-01T05:45:00.577Z"
     }
   ],
   "resolvedSubmissions": [
@@ -301,6 +399,105 @@
         }
       ],
       "resolvedAt": "2026-04-30T21:48:33.317Z"
+    },
+    {
+      "userId": "usr_1887ec87ec027c3cd7cf6f64c5063d90",
+      "slateId": "slate_dad2db0d19cd24d9",
+      "correct": 5,
+      "total": 10,
+      "matchups": [
+        {
+          "matchupId": "m1",
+          "winner": "void",
+          "actualA": null,
+          "actualB": null,
+          "policy": "postponed",
+          "userPick": "B",
+          "isCorrect": null
+        },
+        {
+          "matchupId": "m2",
+          "winner": "A",
+          "actualA": 17.2,
+          "actualB": 14.7,
+          "policy": "normal",
+          "userPick": "B",
+          "isCorrect": false
+        },
+        {
+          "matchupId": "m3",
+          "winner": "A",
+          "actualA": 16.1,
+          "actualB": 13.7,
+          "policy": "normal",
+          "userPick": "A",
+          "isCorrect": true
+        },
+        {
+          "matchupId": "m4",
+          "winner": "A",
+          "actualA": 13.8,
+          "actualB": 11.4,
+          "policy": "normal",
+          "userPick": "B",
+          "isCorrect": false
+        },
+        {
+          "matchupId": "m5",
+          "winner": "A",
+          "actualA": 19.7,
+          "actualB": 17.3,
+          "policy": "normal",
+          "userPick": "B",
+          "isCorrect": false
+        },
+        {
+          "matchupId": "m6",
+          "winner": "A",
+          "actualA": 15.2,
+          "actualB": 12.7,
+          "policy": "normal",
+          "userPick": "A",
+          "isCorrect": true
+        },
+        {
+          "matchupId": "m7",
+          "winner": "A",
+          "actualA": 15.6,
+          "actualB": 13.2,
+          "policy": "normal",
+          "userPick": "A",
+          "isCorrect": true
+        },
+        {
+          "matchupId": "m8",
+          "winner": "A",
+          "actualA": 15,
+          "actualB": 12.6,
+          "policy": "normal",
+          "userPick": "A",
+          "isCorrect": true
+        },
+        {
+          "matchupId": "m9",
+          "winner": "A",
+          "actualA": 14.3,
+          "actualB": 11.9,
+          "policy": "normal",
+          "userPick": "B",
+          "isCorrect": false
+        },
+        {
+          "matchupId": "m10",
+          "winner": "A",
+          "actualA": 19.4,
+          "actualB": 17,
+          "policy": "normal",
+          "userPick": "A",
+          "isCorrect": true
+        }
+      ],
+      "resolvedAt": "2026-05-01T05:45:24.471Z"
     }
   ]
 }

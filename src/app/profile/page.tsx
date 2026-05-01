@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { resolveSession, SESSION_COOKIE } from "@/lib/auth";
+import { getDefaultScoringAdapter, serializeScoringTransparency } from "@/lib/scoring";
 import { getProfileHistorySnapshot } from "@/lib/profile-history";
 
 export default async function ProfilePage() {
@@ -18,6 +19,7 @@ export default async function ProfilePage() {
   }
 
   const { aggregates, history, memberSince } = snapshot;
+  const defaultScoring = serializeScoringTransparency(getDefaultScoringAdapter());
 
   return (
     <div className="flex min-h-screen flex-col gap-8 bg-zinc-50 p-6 dark:bg-zinc-950">
@@ -101,6 +103,10 @@ export default async function ProfilePage() {
                       Slate {row.slateStatus} · Locked {new Date(row.lockAt).toLocaleString()} · Submitted{" "}
                       {new Date(row.submittedAt).toLocaleString()}
                     </p>
+                    <p className="mt-1 text-[11px] text-zinc-500 dark:text-zinc-400">
+                      Rules when scored: {row.scoringRulesetDisplayName}{" "}
+                      <span className="tabular-nums">({row.scoringRulesetId})</span>
+                    </p>
                   </div>
                   <div className="sm:text-right">
                     <p className="text-sm font-semibold tabular-nums">
@@ -119,6 +125,12 @@ export default async function ProfilePage() {
             </ul>
           }
         </section>
+
+        <footer className="rounded-xl border border-black/10 bg-white p-5 text-xs text-zinc-600 dark:border-white/20 dark:bg-black dark:text-zinc-400">
+          <p className="font-semibold text-zinc-900 dark:text-zinc-100">Fantasy scoring (MVP continuity)</p>
+          <p className="mt-2 leading-relaxed">{defaultScoring.rulesSummary}</p>
+          <p className="mt-2 leading-relaxed text-zinc-500 dark:text-zinc-500">{defaultScoring.tieBreakerLine}</p>
+        </footer>
       </main>
     </div>
   );

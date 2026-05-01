@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { getLatestPlayableSlate } from "@/lib/slates";
 import { resolveSession, SESSION_COOKIE } from "@/lib/auth";
+import { getLatestPlayableSlate } from "@/lib/slates";
+import { getScoringAdapterForSlate, serializeScoringTransparency } from "@/lib/scoring";
 
 export async function GET() {
   const cookieStore = await cookies();
@@ -15,12 +16,17 @@ export async function GET() {
   if (!slate) {
     return NextResponse.json({
       slate: null,
+      scoringTransparency: null,
       emptyState: "No active slate is currently published.",
     });
   }
 
+  const scoringAdapter = getScoringAdapterForSlate(slate);
+
   return NextResponse.json({
     slate,
     readOnly: slate.status !== "open",
+    scoringTransparency: serializeScoringTransparency(scoringAdapter),
+    scoringRulesetId: slate.scoringRulesetId ?? scoringAdapter.id,
   });
 }

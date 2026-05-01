@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { cookies, headers } from "next/headers";
 import { resolveSession, SESSION_COOKIE } from "@/lib/auth";
+import { getScoringAdapterForSlate, serializeScoringTransparency } from "@/lib/scoring";
 import { readStore } from "@/lib/store";
 
 export async function GET(request: Request) {
@@ -48,6 +49,7 @@ export async function GET(request: Request) {
           status: slate.status,
           lockAt: slate.lockAt,
           matchupCount: slate.matchups.length,
+          scoringTransparency: serializeScoringTransparency(getScoringAdapterForSlate(slate)),
         }
       : null,
     submission:
