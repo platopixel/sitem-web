@@ -45,6 +45,10 @@ export function SessionTools() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [readOnly, setReadOnly] = useState(false);
   const [resolved, setResolved] = useState<ResolvedSubmission | null>(null);
+  const [auditEmail, setAuditEmail] = useState("");
+  const [auditSlateId, setAuditSlateId] = useState("");
+  const [auditStatus, setAuditStatus] = useState<string | null>(null);
+  const [auditLoading, setAuditLoading] = useState(false);
   const router = useRouter();
 
   const picksCompletedCount = useMemo(() => {
@@ -199,6 +203,45 @@ export function SessionTools() {
     }
     setSlateStatus("Slate resolved from mock answer key.");
     await loadActiveSlate();
+  }
+
+  async function runSubmissionAudit() {
+    const slateId = auditSlateId.trim();
+    const email = auditEmail.trim();
+    if (!slateId || !email) {
+      setAuditStatus("Enter both user email and slate ID.");
+      return;
+    }
+    setAuditLoading(true);
+    setAuditStatus("Checking submission record...");
+    const params = new URLSearchParams({ email, slateId });
+    const response = await fetch(`/api/admin/users/audit?${params.toString()}`, {
+      headers: { "x-admin-secret": "dev-admin" },
+    });
+    const data = (await response.json()) as {
+      error?: string;
+      submitted?: boolean;
+      user?: { email: string; id: string } | null;
+      slate?: { id: string; label: string } | null;
+      submission?: { updatedAt?: string; pickCount?: number } | null;
+    };
+    setAuditLoading(false);
+    if (!response.ok) {
+      setAuditStatus(data.error ?? "Audit request failed.");
+      return;
+    }
+    const userLine = data.user ? `${data.user.email} (${data.user.id})` : "User not registered";
+    const slateLine =
+      data.slate ? `${data.slate.label} (${data.slate.id})` : "Slate ID not found";
+    const pickLine =
+      data.submitted && data.submission?.updatedAt ?
+        `Recorded ${data.submission.pickCount ?? "?"} matchup picks · ${new Date(data.submission.updatedAt).toLocaleString()}`
+      : data.submitted ? "Recorded submission timestamps unavailable." : "No submission on file.";
+    setAuditStatus(
+      [`Support audit: submitted=${Boolean(data.submitted)}`, userLine, slateLine, pickLine].join(
+        "\n",
+      ),
+    );
   }
 
   async function publishMockSlate() {
@@ -371,6 +414,49 @@ export function SessionTools() {
           </ol>
         </section>
       ) : null}
+      <section className="mt-8 border-t border-black/10 pt-6 dark:border-white/15">
+        <h3 className="text-lg font-semibold">Support audit (admin)</h3>
+        <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+          Confirm whether an account submitted picks for a slate. Sends the usual admin secret header.
+        </p>
+        <div className="mt-3 grid gap-3 md:grid-cols-2">
+          <label className="flex flex-col gap-1 text-sm font-medium">
+            User email
+            <input
+              type="email"
+              className="rounded-md border border-black/15 px-3 py-2 text-sm dark:border-white/20 dark:bg-transparent"
+              value={auditEmail}
+              onChange={(event) => setAuditEmail(event.target.value)}
+              autoComplete="off"
+              placeholder="player@example.com"
+            />
+          </label>
+          <label className="flex flex-col gap-1 text-sm font-medium">
+            Slate ID
+            <input
+              type="text"
+              className="rounded-md border border-black/15 px-3 py-2 text-sm dark:border-white/20 dark:bg-transparent"
+              value={auditSlateId}
+              onChange={(event) => setAuditSlateId(event.target.value)}
+              autoComplete="off"
+              placeholder="slate_*"
+            />
+          </label>
+        </div>
+        <button
+          type="button"
+          className="mt-3 rounded-md bg-zinc-800 px-4 py-2 text-sm font-medium text-white disabled:opacity-60 dark:bg-zinc-200 dark:text-black"
+          onClick={runSubmissionAudit}
+          disabled={auditLoading}
+        >
+          {auditLoading ? "Checking..." : "Check submission"}
+        </button>
+        {auditStatus ?
+          <pre className="mt-4 whitespace-pre-wrap rounded-md bg-zinc-100 p-3 text-xs dark:bg-white/10">
+            {auditStatus}
+          </pre>
+        : null}
+      </section>
     </section>
   );
 }

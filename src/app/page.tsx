@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { cookies } from "next/headers";
 import { AuthPanel } from "./auth-panel";
 import { SessionTools } from "./session-tools";
@@ -18,6 +19,14 @@ export default async function Home() {
               <h1 className="text-2xl font-semibold">{user.email}</h1>
               <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
                 Phase 3 status: active slate picks flow is enabled for signed-in users.
+              </p>
+              <p className="mt-3">
+                <Link
+                  href="/profile"
+                  className="text-sm font-medium text-zinc-900 underline underline-offset-4 hover:text-zinc-600 dark:text-white dark:hover:text-zinc-300"
+                >
+                  Profile & history
+                </Link>
               </p>
             </section>
             <SessionTools />
