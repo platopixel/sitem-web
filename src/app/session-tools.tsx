@@ -290,10 +290,16 @@ export function SessionTools() {
   }
 
   return (
-    <section className="w-full rounded-xl border border-black/10 bg-white p-6 shadow-sm dark:border-white/20 dark:bg-black">
-      <h2 className="text-xl font-semibold">Close Call picks</h2>
-      <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-        Make one pick per matchup, then submit before lock.
+    <section
+      className="w-full rounded-xl border border-black/10 bg-white p-6 shadow-sm dark:border-white/20 dark:bg-black"
+      aria-labelledby="picks-heading"
+    >
+      <h2 id="picks-heading" className="text-xl font-semibold">
+        Close Call picks
+      </h2>
+      <p id="picks-instructions" className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+        Make one pick per matchup, then submit before lock. Use Tab to move between matchups, arrow keys
+        to change selection within a matchup, and submit when every matchup has a pick.
       </p>
       {activeSlate && scoringTransparency ?
         <aside
@@ -313,35 +319,47 @@ export function SessionTools() {
       <div className="mt-4 flex flex-wrap gap-2">
         <button
           type="button"
-          className="rounded-md border border-black/20 px-4 py-2 text-sm disabled:opacity-60"
+          className="min-h-11 rounded-md border border-black/20 px-4 py-2 text-sm disabled:opacity-60"
           onClick={loadActiveSlate}
           disabled={isLoadingSlate}
+          aria-busy={isLoadingSlate}
         >
           {isLoadingSlate ? "Loading slate..." : "Reload active slate"}
         </button>
         <button
           type="button"
-          className="rounded-md border border-black/20 px-4 py-2 text-sm"
+          className="min-h-11 rounded-md border border-black/20 px-4 py-2 text-sm"
           onClick={publishMockSlate}
         >
           Publish mock slate (admin)
         </button>
         <button
           type="button"
-          className="rounded-md border border-black/20 px-4 py-2 text-sm"
+          className="min-h-11 rounded-md border border-black/20 px-4 py-2 text-sm"
           onClick={resolveMockResults}
         >
           Resolve mock results (admin)
         </button>
       </div>
-      {slateStatus ? <p className="mt-3 text-sm">{slateStatus}</p> : null}
+      <div role="status" aria-live="polite" aria-atomic="true" className="mt-3 min-h-5 text-sm">
+        {slateStatus ? slateStatus : null}
+      </div>
       {activeSlate ? (
-        <div className="mt-3 rounded-md border border-black/10 p-3 text-sm dark:border-white/20">
+        <div
+          className="mt-3 rounded-md border border-black/10 p-3 text-sm dark:border-white/20"
+          role="region"
+          aria-label="Active slate summary"
+        >
           <p>
             Active slate: <span className="font-medium">{activeSlate.label}</span>
           </p>
-          <p>Lock deadline: {new Date(activeSlate.lockAt).toLocaleString()}</p>
-          <p>Status: {activeSlate.status}</p>
+          <p>
+            Lock deadline:{" "}
+            <time dateTime={activeSlate.lockAt}>{new Date(activeSlate.lockAt).toLocaleString()}</time>
+          </p>
+          <p>
+            Status: <span className="capitalize">{activeSlate.status}</span>
+          </p>
           <p className="mt-1 text-zinc-600 dark:text-zinc-400">
             Picks completed: {picksCompletedCount}/{activeSlate.matchups.length}
           </p>
@@ -357,60 +375,118 @@ export function SessionTools() {
         </div>
       )}
       {activeSlate ? (
-        <ol className="mt-4 grid gap-3 md:grid-cols-2">
-          {activeSlate.matchups.map((matchup, index) => (
-            <li key={matchup.id} className="rounded-md border border-black/10 p-3 dark:border-white/20">
-              <p className="text-sm font-medium">Matchup {index + 1}</p>
-              <div className="mt-2 grid gap-2">
-                <button
-                  type="button"
-                  className={`rounded-md border px-3 py-2 text-left text-sm ${
-                    picks[matchup.id] === "A"
-                      ? "border-black bg-black text-white dark:border-white dark:bg-white dark:text-black"
-                      : "border-black/20"
-                  }`}
-                  onClick={() => pick(matchup.id, "A")}
-                  disabled={readOnly}
-                >
-                  {matchup.playerA} ({matchup.projectedA.toFixed(1)} {projectionSuffix})
-                </button>
-                <button
-                  type="button"
-                  className={`rounded-md border px-3 py-2 text-left text-sm ${
-                    picks[matchup.id] === "B"
-                      ? "border-black bg-black text-white dark:border-white dark:bg-white dark:text-black"
-                      : "border-black/20"
-                  }`}
-                  onClick={() => pick(matchup.id, "B")}
-                  disabled={readOnly}
-                >
-                  {matchup.playerB} ({matchup.projectedB.toFixed(1)} {projectionSuffix})
-                </button>
-              </div>
-            </li>
-          ))}
-        </ol>
-      ) : null}
-      <div className="mt-4 flex flex-wrap gap-2">
-        <button
-          type="button"
-          className="rounded-md bg-black px-4 py-2 text-sm font-medium text-white disabled:opacity-60 dark:bg-white dark:text-black"
-          onClick={submitPicks}
-          disabled={!activeSlate || isSubmitting || readOnly}
+        <form
+          className="mt-4 space-y-3"
+          aria-labelledby="picks-heading"
+          aria-describedby="picks-instructions"
+          onSubmit={(event) => {
+            event.preventDefault();
+            void submitPicks();
+          }}
         >
-          {isSubmitting ? "Submitting..." : "Submit picks"}
-        </button>
-        <button
-          type="button"
-          className="rounded-md border border-black/20 px-4 py-2 text-sm"
-          onClick={signOut}
-        >
-          Sign out
-        </button>
-      </div>
-      {submitStatus ? <p className="mt-3 text-sm">{submitStatus}</p> : null}
+          <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Matchups</p>
+          <ol className="grid list-none gap-3 p-0 md:grid-cols-2 md:gap-4" aria-label={`${activeSlate.matchups.length} head-to-head matchups`}>
+            {activeSlate.matchups.map((matchup, index) => (
+              <li key={matchup.id}>
+                <fieldset
+                  disabled={readOnly}
+                  className="min-w-0 rounded-md border border-black/10 p-3 pt-4 disabled:opacity-80 dark:border-white/20"
+                >
+                  <legend className="mx-px mb-2 px-0 text-sm font-medium leading-snug text-zinc-900 dark:text-zinc-50">
+                    Matchup {index + 1}:{" "}
+                    <span className="font-normal text-zinc-600 dark:text-zinc-400">
+                      {matchup.playerA} vs {matchup.playerB}
+                    </span>
+                  </legend>
+                  <div className="grid gap-2">
+                    <label
+                      htmlFor={`pick-${matchup.id}-a`}
+                      className={`touch-manipulation rounded-md border px-3 py-3 text-left text-sm transition-colors focus-within:ring-2 focus-within:ring-zinc-900 focus-within:ring-offset-2 focus-within:ring-offset-white dark:focus-within:ring-zinc-100 dark:focus-within:ring-offset-black ${
+                        picks[matchup.id] === "A"
+                          ? "border-black bg-black text-white dark:border-white dark:bg-white dark:text-black"
+                          : "border-black/20"
+                      } ${readOnly ? "cursor-default" : "cursor-pointer"}`}
+                    >
+                      <input
+                        id={`pick-${matchup.id}-a`}
+                        type="radio"
+                        name={`pick-${matchup.id}`}
+                        value="A"
+                        className="sr-only"
+                        checked={picks[matchup.id] === "A"}
+                        onChange={() => pick(matchup.id, "A")}
+                      />
+                      <span className="tabular-nums">
+                        {matchup.playerA} ({matchup.projectedA.toFixed(1)} {projectionSuffix})
+                      </span>
+                    </label>
+                    <label
+                      htmlFor={`pick-${matchup.id}-b`}
+                      className={`touch-manipulation rounded-md border px-3 py-3 text-left text-sm transition-colors focus-within:ring-2 focus-within:ring-zinc-900 focus-within:ring-offset-2 focus-within:ring-offset-white dark:focus-within:ring-zinc-100 dark:focus-within:ring-offset-black ${
+                        picks[matchup.id] === "B"
+                          ? "border-black bg-black text-white dark:border-white dark:bg-white dark:text-black"
+                          : "border-black/20"
+                      } ${readOnly ? "cursor-default" : "cursor-pointer"}`}
+                    >
+                      <input
+                        id={`pick-${matchup.id}-b`}
+                        type="radio"
+                        name={`pick-${matchup.id}`}
+                        value="B"
+                        className="sr-only"
+                        checked={picks[matchup.id] === "B"}
+                        onChange={() => pick(matchup.id, "B")}
+                      />
+                      <span className="tabular-nums">
+                        {matchup.playerB} ({matchup.projectedB.toFixed(1)} {projectionSuffix})
+                      </span>
+                    </label>
+                  </div>
+                </fieldset>
+              </li>
+            ))}
+          </ol>
+          <div className="flex flex-wrap gap-2 pt-2">
+            <button
+              type="submit"
+              className="min-h-11 rounded-md bg-black px-4 py-2 text-sm font-medium text-white disabled:opacity-60 dark:bg-white dark:text-black"
+              disabled={!activeSlate || isSubmitting || readOnly}
+              aria-busy={isSubmitting}
+            >
+              {isSubmitting ? "Submitting picks..." : "Submit picks"}
+            </button>
+            <button type="button" className="min-h-11 rounded-md border border-black/20 px-4 py-2 text-sm" onClick={signOut}>
+              Sign out
+            </button>
+          </div>
+        </form>
+      ) : (
+        <div className="mt-4 flex flex-wrap gap-2">
+          <button
+            type="button"
+            className="min-h-11 rounded-md bg-black/50 px-4 py-2 text-sm font-medium text-white disabled:opacity-100 dark:bg-white/50 dark:text-black"
+            disabled
+            aria-disabled="true"
+            title="Load an active slate before you can submit picks."
+          >
+            Submit picks
+          </button>
+          <button type="button" className="min-h-11 rounded-md border border-black/20 px-4 py-2 text-sm" onClick={signOut}>
+            Sign out
+          </button>
+        </div>
+      )}
+      {submitStatus ?
+        <p role="status" aria-live="polite" aria-atomic="true" className="mt-3 text-sm">
+          {submitStatus}
+        </p>
+      : null}
       {resolved ? (
-        <section className="mt-4 rounded-md border border-black/10 p-3 text-sm dark:border-white/20">
+        <section
+          className="mt-4 rounded-md border border-black/10 p-3 text-sm dark:border-white/20"
+          role="region"
+          aria-label="Resolved slate results"
+        >
           <p className="font-medium">
             Results: {resolved.correct}/{resolved.total} correct
           </p>
@@ -477,9 +553,10 @@ export function SessionTools() {
         </div>
         <button
           type="button"
-          className="mt-3 rounded-md bg-zinc-800 px-4 py-2 text-sm font-medium text-white disabled:opacity-60 dark:bg-zinc-200 dark:text-black"
+          className="mt-3 min-h-11 rounded-md bg-zinc-800 px-4 py-2 text-sm font-medium text-white disabled:opacity-60 dark:bg-zinc-200 dark:text-black"
           onClick={runSubmissionAudit}
           disabled={auditLoading}
+          aria-busy={auditLoading}
         >
           {auditLoading ? "Checking..." : "Check submission"}
         </button>
