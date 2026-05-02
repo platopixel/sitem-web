@@ -334,13 +334,13 @@ export function SessionTools() {
 
   return (
     <section
-      className="w-full rounded-xl border border-black/10 bg-white p-6 shadow-sm dark:border-white/20 dark:bg-black"
+      className="w-full rounded-xl border border-slate-200 bg-white p-6 shadow-md"
       aria-labelledby="picks-heading"
     >
-      <h2 id="picks-heading" className="text-xl font-semibold">
+      <h2 id="picks-heading" className="text-xl font-semibold text-slate-900">
         Close Call picks
       </h2>
-      <p id="picks-instructions" className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+      <p id="picks-instructions" className="mt-2 text-sm text-slate-600">
         Make one pick per matchup, then submit before lock. Use Tab to move between matchups, arrow keys
         to change selection within a matchup, and submit when every matchup has a pick.
       </p>

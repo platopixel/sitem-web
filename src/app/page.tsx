@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { cookies } from "next/headers";
+import { PicksShell } from "@/components/picks-shell";
 import { AuthPanel } from "./auth-panel";
 import { SessionTools } from "./session-tools";
 import { resolveSession, SESSION_COOKIE } from "@/lib/auth";
@@ -10,20 +11,20 @@ export default async function Home() {
   const user = await resolveSession(sessionId);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 p-6 dark:bg-zinc-950">
-      <main className="w-full max-w-3xl space-y-6">
+    <PicksShell>
+      <div className="space-y-6">
         {user ? (
           <>
-            <section className="rounded-xl border border-black/10 bg-white p-6 dark:border-white/20 dark:bg-black">
-              <p className="text-sm text-zinc-600 dark:text-zinc-400">Signed in as</p>
-              <h1 className="text-2xl font-semibold">{user.email}</h1>
-              <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-                Phase 3 status: active slate picks flow is enabled for signed-in users.
+            <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-md">
+              <p className="text-sm font-medium text-slate-600">Signed in as</p>
+              <h2 className="text-2xl font-semibold text-slate-900">{user.email}</h2>
+              <p className="mt-2 text-sm text-slate-600">
+                Active slate picks are available for your account.
               </p>
               <p className="mt-3">
                 <Link
                   href="/profile"
-                  className="text-sm font-medium text-zinc-900 underline underline-offset-4 hover:text-zinc-600 dark:text-white dark:hover:text-zinc-300"
+                  className="text-sm font-medium text-emerald-600 underline decoration-emerald-600/30 underline-offset-4 hover:text-emerald-700"
                 >
                   Profile & history
                 </Link>
@@ -34,7 +35,7 @@ export default async function Home() {
         ) : (
           <AuthPanel />
         )}
-      </main>
-    </div>
+      </div>
+    </PicksShell>
   );
 }

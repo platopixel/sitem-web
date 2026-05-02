@@ -2,6 +2,9 @@
 
 import { FormEvent, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 type Mode = "signin" | "signup";
 
@@ -40,61 +43,75 @@ export function AuthPanel() {
   }
 
   return (
-    <section className="w-full max-w-md rounded-xl border border-black/10 bg-white p-6 shadow-sm dark:border-white/20 dark:bg-black">
-      <h1 className="text-2xl font-semibold">Close Call Fantasy Picks</h1>
-      <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+    <section className="mx-auto w-full max-w-md rounded-xl border border-slate-200 bg-white p-8 shadow-md">
+      <h2 className="text-2xl font-semibold text-slate-900">Sign in to pick</h2>
+      <p className="mt-2 text-sm text-slate-600">
         Create an account or sign in to keep your picks across sessions.
       </p>
       {searchParams.get("reauth") === "1" ? (
-        <p className="mt-4 rounded-md bg-amber-100 p-2 text-sm text-amber-950">
+        <p className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950">
           Your session expired. Sign in again; non-sensitive draft context can be restored.
         </p>
       ) : null}
-      <div className="mt-4 flex gap-2">
-        <button
-          className={`rounded-md px-3 py-1 text-sm ${mode === "signin" ? "bg-black text-white dark:bg-white dark:text-black" : "border border-black/20"}`}
-          onClick={() => setMode("signin")}
+      <div className="mt-6 grid grid-cols-2 gap-2">
+        <Button
           type="button"
+          variant={mode === "signin" ? "default" : "outline"}
+          className={
+            mode === "signin" ? "bg-emerald-600 hover:bg-emerald-700" : "border-slate-300"
+          }
+          onClick={() => setMode("signin")}
         >
           Sign in
-        </button>
-        <button
-          className={`rounded-md px-3 py-1 text-sm ${mode === "signup" ? "bg-black text-white dark:bg-white dark:text-black" : "border border-black/20"}`}
-          onClick={() => setMode("signup")}
+        </Button>
+        <Button
           type="button"
+          variant={mode === "signup" ? "default" : "outline"}
+          className={
+            mode === "signup" ? "bg-emerald-600 hover:bg-emerald-700" : "border-slate-300"
+          }
+          onClick={() => setMode("signup")}
         >
           Create account
-        </button>
+        </Button>
       </div>
-      <form className="mt-4 space-y-3" onSubmit={onSubmit}>
-        <input
-          className="w-full rounded-md border border-black/20 p-2 text-sm"
-          type="email"
-          autoComplete="email"
-          placeholder="you@example.com"
-          value={email}
-          onChange={(event) => setEmail(event.target.value)}
-          required
-        />
-        <input
-          className="w-full rounded-md border border-black/20 p-2 text-sm"
-          type="password"
-          autoComplete={mode === "signin" ? "current-password" : "new-password"}
-          placeholder="Password (8+ characters)"
-          value={password}
-          onChange={(event) => setPassword(event.target.value)}
-          required
-          minLength={8}
-        />
-        <button
-          className="w-full rounded-md bg-black px-4 py-2 text-sm font-medium text-white disabled:opacity-60 dark:bg-white dark:text-black"
+      <form className="mt-6 space-y-4" onSubmit={onSubmit}>
+        <div className="space-y-2">
+          <Label htmlFor="auth-email">Email</Label>
+          <Input
+            id="auth-email"
+            type="email"
+            autoComplete="email"
+            placeholder="you@example.com"
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            required
+            className="border-slate-200"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="auth-password">Password</Label>
+          <Input
+            id="auth-password"
+            type="password"
+            autoComplete={mode === "signin" ? "current-password" : "new-password"}
+            placeholder="Password (8+ characters)"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            required
+            minLength={8}
+            className="border-slate-200"
+          />
+        </div>
+        <Button
           type="submit"
+          className="w-full bg-emerald-600 py-5 text-base font-semibold hover:bg-emerald-700"
           disabled={submitting}
         >
           {submitting ? "Working..." : mode === "signin" ? "Sign in" : "Create account"}
-        </button>
+        </Button>
       </form>
-      {status ? <p className="mt-3 text-sm">{status}</p> : null}
+      {status ? <p className="mt-4 text-sm text-slate-600">{status}</p> : null}
     </section>
   );
 }
